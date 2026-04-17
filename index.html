@@ -9,12 +9,24 @@
 
 <body style="text-align:center;font-family:sans-serif">
 
-  <h2>Scan QR</h2>
-  <div id="reader" style="width:300px;margin:auto;"></div>
+  <h2>Hi-Tea Scanner</h2>
+
+  <button onclick="startScanner()" style="padding:10px 20px;font-size:16px">
+    Scan QR
+  </button>
+
+  <div id="reader" style="width:300px;margin:20px auto;display:none;"></div>
+
   <h2 id="result"></h2>
+
+  <button id="scanAgainBtn" onclick="resetScanner()" 
+    style="display:none;padding:10px 20px;font-size:16px">
+    Scan Other
+  </button>
 
   <script>
     const BASE_URL = "https://script.google.com/macros/s/AKfycbz4ShR2Rff10StsCBGvY-AFmkuYhiCYgWuVNZI62WfWJfibitLxAJ098scbYh93nfotLQ/exec";
+    let scanner;
 
     function show(text, color) {
       let el = document.getElementById("result");
@@ -22,11 +34,26 @@
       el.style.color = color;
     }
 
+    function startScanner() {
+      document.getElementById("reader").style.display = "block";
+      document.getElementById("result").innerText = "";
+      document.getElementById("scanAgainBtn").style.display = "none";
+
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        onScanSuccess
+      );
+    }
+
     function onScanSuccess(decodedText) {
+
+      scanner.stop(); // stop camera immediately
 
       let url = decodedText;
 
-      // If QR is just ID
       if (!decodedText.startsWith("http")) {
         url = BASE_URL + "?id=" + decodedText;
       }
@@ -46,20 +73,16 @@
           else {
             show("INVALID QR", "red");
           }
+
+          document.getElementById("scanAgainBtn").style.display = "inline-block";
         });
     }
 
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
-        new Html5Qrcode("reader").start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          onScanSuccess
-        );
-      }
-    }).catch(err => {
-      show("Camera error: " + err, "red");
-    });
+    function resetScanner() {
+      document.getElementById("reader").style.display = "none";
+      document.getElementById("result").innerText = "";
+      document.getElementById("scanAgainBtn").style.display = "none";
+    }
 
   </script>
 
