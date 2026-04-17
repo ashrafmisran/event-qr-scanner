@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR Scanner</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+</head>
+
+<body style="text-align:center;font-family:sans-serif">
+
+  <h2>Scan QR</h2>
+  <div id="reader" style="width:300px;margin:auto;"></div>
+  <h2 id="result"></h2>
+
+  <script>
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbz4ShR2Rff10StsCBGvY-AFmkuYhiCYgWuVNZI62WfWJfibitLxAJ098scbYh93nfotLQ/exec";
+
+    function show(text, color) {
+      let el = document.getElementById("result");
+      el.innerText = text;
+      el.style.color = color;
+    }
+
+    function onScanSuccess(decodedText) {
+
+      let url = decodedText;
+
+      // If QR is just ID
+      if (!decodedText.startsWith("http")) {
+        url = BASE_URL + "?id=" + decodedText;
+      }
+
+      fetch(url)
+        .then(res => res.text())
+        .then(result => {
+
+          let parts = result.split("|");
+
+          if (parts[0] === "OK") {
+            show("WELCOME " + parts[1] + " (" + parts[2] + " pax)", "green");
+          } 
+          else if (parts[0] === "ALREADY") {
+            show("ALREADY CHECKED: " + parts[1], "orange");
+          } 
+          else {
+            show("INVALID QR", "red");
+          }
+        });
+    }
+
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices && devices.length) {
+        new Html5Qrcode("reader").start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
+        );
+      }
+    }).catch(err => {
+      show("Camera error: " + err, "red");
+    });
+
+  </script>
+
+</body>
+</html>
