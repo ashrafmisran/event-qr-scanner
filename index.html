@@ -82,9 +82,12 @@
           if (parts[0] === "OK") {
             setUI("WELCOME " + parts[1] + " (" + parts[2] + " pax)", "green", "Scan Again");
           } 
-          else if (parts[0] === "ALREADY") {
-            setUI("ALREADY CHECKED: " + parts[1], "orange", "Scan Again");
-          } 
+         else if (parts[0] === "ALREADY") {
+
+            let timeText = parts[2] ? " (" + parts[2] + ")" : "";
+          
+            setUI("ALREADY CHECKED: " + parts[1] + timeText, "orange", "Scan Again");
+          }
           else {
             setUI("INVALID QR", "red", "Scan Again");
           }
