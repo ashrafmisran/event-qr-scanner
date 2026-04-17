@@ -5,6 +5,7 @@
   <title>QR Scanner</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body style="text-align:center;font-family:sans-serif">
@@ -19,6 +20,28 @@
     style="padding:12px 24px;font-size:16px">
     Scan QR
   </button>
+
+  <div style="margin-top:30px">
+
+    <div style="display:flex;justify-content:center;gap:20px">
+      
+      <div style="padding:15px;background:#eee;border-radius:10px">
+        <h4>Bilangan Daftar</h4>
+        <h2 id="total">0</h2>
+      </div>
+  
+      <div style="padding:15px;background:#eee;border-radius:10px">
+        <h4>Sudah Hadir</h4>
+        <h2 id="hadir">0</h2>
+      </div>
+  
+    </div>
+  
+    <div style="width:250px;margin:20px auto">
+      <canvas id="chart"></canvas>
+    </div>
+  
+  </div>
 
   <script>
     const BASE_URL = "https://script.google.com/macros/s/AKfycbz4ShR2Rff10StsCBGvY-AFmkuYhiCYgWuVNZI62WfWJfibitLxAJ098scbYh93nfotLQ/exec";
@@ -98,12 +121,44 @@
           setUI("NETWORK ERROR", "red", "Scan Again");
           state = "result";
         });
+      
+      loadStats();
     }
 
     function reset() {
       state = "idle";
       setUI("Ready", "black", "Scan QR");
     }
+
+    let chart;
+    
+    function loadStats() {
+    
+      fetch(BASE_URL + "?stats=1")
+        .then(res => res.json())
+        .then(data => {
+    
+          document.getElementById("total").innerText = data.total;
+          document.getElementById("hadir").innerText = data.hadir;
+    
+          let belum = data.belum;
+    
+          if (chart) chart.destroy();
+    
+          chart = new Chart(document.getElementById("chart"), {
+            type: "doughnut",
+            data: {
+              labels: ["Hadir", "Belum"],
+              datasets: [{
+                data: [data.hadir, belum]
+              }]
+            }
+          });
+    
+        });
+    }
+
+    loadStats();
 
   </script>
 
