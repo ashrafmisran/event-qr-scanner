@@ -11,33 +11,43 @@
 
   <h2>Hi-Tea Scanner</h2>
 
-  <button onclick="startScanner()" style="padding:10px 20px;font-size:16px">
-    Scan QR
-  </button>
-
   <div id="reader" style="width:300px;margin:20px auto;display:none;"></div>
 
-  <h2 id="result"></h2>
+  <h2 id="status">Ready</h2>
 
-  <button id="scanAgainBtn" onclick="resetScanner()" 
-    style="display:none;padding:10px 20px;font-size:16px">
-    Scan Other
+  <button id="actionBtn" onclick="handleAction()" 
+    style="padding:12px 24px;font-size:16px">
+    Scan QR
   </button>
 
   <script>
     const BASE_URL = "https://script.google.com/macros/s/AKfycbz4ShR2Rff10StsCBGvY-AFmkuYhiCYgWuVNZI62WfWJfibitLxAJ098scbYh93nfotLQ/exec";
-    let scanner;
 
-    function show(text, color) {
-      let el = document.getElementById("result");
-      el.innerText = text;
-      el.style.color = color;
+    let scanner = null;
+    let state = "idle"; 
+    // idle | scanning | checking | result
+
+    function setUI(text, color, buttonText) {
+      document.getElementById("status").innerText = text;
+      document.getElementById("status").style.color = color;
+      document.getElementById("actionBtn").innerText = buttonText;
+    }
+
+    function handleAction() {
+
+      if (state === "idle") {
+        startScanner();
+      } 
+      else if (state === "result") {
+        reset();
+      }
     }
 
     function startScanner() {
+      state = "scanning";
+
       document.getElementById("reader").style.display = "block";
-      document.getElementById("result").innerText = "";
-      document.getElementById("scanAgainBtn").style.display = "none";
+      setUI("Scanning...", "black", "Scanning...");
 
       scanner = new Html5Qrcode("reader");
 
@@ -50,7 +60,12 @@
 
     function onScanSuccess(decodedText) {
 
-      scanner.stop(); // stop camera immediately
+      state = "checking";
+
+      scanner.stop();
+      document.getElementById("reader").style.display = "none";
+
+      setUI("Checking...", "blue", "Please wait");
 
       let url = decodedText;
 
@@ -65,23 +80,26 @@
           let parts = result.split("|");
 
           if (parts[0] === "OK") {
-            show("WELCOME " + parts[1] + " (" + parts[2] + " pax)", "green");
+            setUI("WELCOME " + parts[1] + " (" + parts[2] + " pax)", "green", "Scan Again");
           } 
           else if (parts[0] === "ALREADY") {
-            show("ALREADY CHECKED: " + parts[1], "orange");
+            setUI("ALREADY CHECKED: " + parts[1], "orange", "Scan Again");
           } 
           else {
-            show("INVALID QR", "red");
+            setUI("INVALID QR", "red", "Scan Again");
           }
 
-          document.getElementById("scanAgainBtn").style.display = "inline-block";
+          state = "result";
+        })
+        .catch(() => {
+          setUI("NETWORK ERROR", "red", "Scan Again");
+          state = "result";
         });
     }
 
-    function resetScanner() {
-      document.getElementById("reader").style.display = "none";
-      document.getElementById("result").innerText = "";
-      document.getElementById("scanAgainBtn").style.display = "none";
+    function reset() {
+      state = "idle";
+      setUI("Ready", "black", "Scan QR");
     }
 
   </script>
